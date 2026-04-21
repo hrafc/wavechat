@@ -1,0 +1,10 @@
+{
+  "name": "WaveChat",
+  "short_name": "WaveChat",
+  "description": "Discord-style chat prototype made with HTML, CSS and JavaScript.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#5865f2"
+}
