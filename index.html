@@ -435,6 +435,23 @@
 
     .small-note{font-size:.84rem;color:#9ea5ae;margin-top:8px;line-height:1.45}
 
+    .settings-section{margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)}
+    .account-list{display:grid;gap:10px;margin-top:10px}
+    .account-pill{
+      width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:12px 14px;border-radius:16px;background:#15171b;border:1px solid #2f343c;
+      color:#eef0f4;text-align:left;
+    }
+    .account-pill:hover{border-color:#6c7cff;transform:translateY(-1px)}
+    .account-pill.active{outline:2px solid rgba(108,124,255,.45)}
+    .account-pill-main{display:flex;align-items:center;gap:12px;min-width:0}
+    .account-pill-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,var(--brand),var(--brand2));flex:0 0 auto}
+    .account-pill-avatar img{width:100%;height:100%;object-fit:cover}
+    .account-pill-meta{min-width:0}
+    .account-pill-name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .account-pill-sub{font-size:.85rem;color:#9ea5ae;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tiny-btn{padding:9px 12px;border-radius:12px;background:#23262d;border:1px solid #353943;color:#eef0f4;font-weight:700}
+
     @media (max-width:1200px){
       .app-shell{grid-template-columns:76px 290px minmax(0,1fr)}
       .members-panel{display:none}
@@ -628,6 +645,10 @@
         </div>
       </div>
 
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+        <button id="copyMyTagBtn" class="tiny-btn" type="button">Copy my full tag</button>
+      </div>
+
       <div class="form-grid">
         <div>
           <div class="label">Profile picture</div>
@@ -644,6 +665,12 @@
           </select>
         </div>
         <button id="saveSettingsBtn" class="submit-btn" type="button">Save settings</button>
+      </div>
+
+      <div class="settings-section">
+        <div class="label">Quick account switch (local prototype)</div>
+        <div id="localAccountList" class="account-list"></div>
+        <div class="small-note">Only accounts created inside this exact app/browser will appear here.</div>
       </div>
     </div>
   </div>
@@ -665,6 +692,12 @@
         </div>
         <button id="confirmAddFriendBtn" class="submit-btn" type="button">Add friend</button>
         <div class="small-note">Friends are unlimited. Chats with friends are permanent and never disappear unless you manually edit the code.</div>
+      </div>
+
+      <div class="settings-section">
+        <div class="label">Accounts found in this browser</div>
+        <div id="localUsersList" class="account-list"></div>
+        <div class="small-note">Tip: if the user is missing here, that account was not created in this same browser/app yet.</div>
       </div>
     </div>
   </div>
@@ -735,11 +768,14 @@
       chatSettingsBtn: document.getElementById('chatSettingsBtn'),
       settingsAvatarPreview: document.getElementById('settingsAvatarPreview'),
       settingsUserIdentity: document.getElementById('settingsUserIdentity'),
+      copyMyTagBtn: document.getElementById('copyMyTagBtn'),
       avatarUpload: document.getElementById('avatarUpload'),
       chatBgSelect: document.getElementById('chatBgSelect'),
       saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+      localAccountList: document.getElementById('localAccountList'),
       friendTagInput: document.getElementById('friendTagInput'),
       confirmAddFriendBtn: document.getElementById('confirmAddFriendBtn'),
+      localUsersList: document.getElementById('localUsersList'),
       chatSettingsContent: document.getElementById('chatSettingsContent'),
       toastMount: document.getElementById('toastMount')
     };
@@ -783,11 +819,12 @@
 
       el.openSettingsBtn.addEventListener('click', openSettings);
       el.openSettingsFromBar.addEventListener('click', openSettings);
-      el.openAddFriendBtn.addEventListener('click', ()=>openModal('addFriendModal'));
-      el.openAddFriendFromBar.addEventListener('click', ()=>openModal('addFriendModal'));
+      el.openAddFriendBtn.addEventListener('click', openAddFriendModal);
+      el.openAddFriendFromBar.addEventListener('click', openAddFriendModal);
       el.chatSettingsBtn.addEventListener('click', openChatSettings);
       el.saveSettingsBtn.addEventListener('click', saveSettings);
       el.confirmAddFriendBtn.addEventListener('click', addFriendByTag);
+      el.copyMyTagBtn?.addEventListener('click', copyMyTag);
 
       document.querySelectorAll('[data-close]').forEach(btn=>{
         btn.addEventListener('click', ()=>closeModal(btn.dataset.close));
@@ -1158,6 +1195,7 @@
       el.settingsUserIdentity.textContent = `${me.username}#${me.tag}`;
       el.chatBgSelect.value = me.settings?.chatBg || 'gradient-1';
       el.avatarUpload.value = '';
+      renderLocalAccountList();
       openModal('settingsModal');
     }
 
@@ -1223,6 +1261,101 @@
       syncUI();
     }
 
+
+    function openAddFriendModal(){
+      const me = getCurrentUser();
+      if(!me) return;
+      el.friendTagInput.value = '';
+      renderLocalUsersList();
+      openModal('addFriendModal');
+    }
+
+    async function copyMyTag(){
+      const me = getCurrentUser();
+      if(!me) return;
+      const fullTag = `${me.username}#${me.tag}`;
+      try{
+        if(navigator.clipboard?.writeText){
+          await navigator.clipboard.writeText(fullTag);
+          return toast('Copied', `${fullTag} copied to your clipboard.`);
+        }
+      }catch(err){
+        console.warn('Clipboard failed', err);
+      }
+      toast('Copy failed', `Your full tag is ${fullTag}.`);
+    }
+
+    function renderLocalUsersList(){
+      const me = getCurrentUser();
+      if(!me || !el.localUsersList) return;
+      const users = Object.values(appState.db.users)
+        .filter(user=>user.id !== me.id)
+        .sort((a,b)=>a.username.localeCompare(b.username));
+
+      if(!users.length){
+        el.localUsersList.innerHTML = `
+          <div class="empty-state">No other local accounts yet. Create a second account in this same app/browser first.</div>
+        `;
+        return;
+      }
+
+      el.localUsersList.innerHTML = users.map(user=>`
+        <button class="account-pill" type="button" data-local-user-tag="${escapeHtml(`${user.username}#${user.tag}`)}">
+          <span class="account-pill-main">
+            <span class="account-pill-avatar">${avatarContent(user)}</span>
+            <span class="account-pill-meta">
+              <span class="account-pill-name">${escapeHtml(user.username)}#${user.tag}</span>
+              <span class="account-pill-sub">Tap to fill this tag into the friend field</span>
+            </span>
+          </span>
+          <span class="tiny-btn">Use</span>
+        </button>
+      `).join('');
+
+      el.localUsersList.querySelectorAll('[data-local-user-tag]').forEach(btn=>{
+        btn.addEventListener('click', ()=>{
+          el.friendTagInput.value = btn.dataset.localUserTag;
+          toast('Filled in', `${btn.dataset.localUserTag} was inserted.`);
+        });
+      });
+    }
+
+    function renderLocalAccountList(){
+      const me = getCurrentUser();
+      if(!me || !el.localAccountList) return;
+      const users = Object.values(appState.db.users)
+        .sort((a,b)=>a.username.localeCompare(b.username));
+
+      el.localAccountList.innerHTML = users.map(user=>`
+        <button class="account-pill ${user.id === me.id ? 'active' : ''}" type="button" data-switch-user-id="${user.id}">
+          <span class="account-pill-main">
+            <span class="account-pill-avatar">${avatarContent(user)}</span>
+            <span class="account-pill-meta">
+              <span class="account-pill-name">${escapeHtml(user.username)}#${user.tag}</span>
+              <span class="account-pill-sub">${escapeHtml(user.email)}</span>
+            </span>
+          </span>
+          <span class="tiny-btn">${user.id === me.id ? 'Current' : 'Switch'}</span>
+        </button>
+      `).join('');
+
+      el.localAccountList.querySelectorAll('[data-switch-user-id]').forEach(btn=>{
+        btn.addEventListener('click', ()=>switchAccount(btn.dataset.switchUserId));
+      });
+    }
+
+    function switchAccount(userId){
+      const user = getUserById(userId);
+      if(!user) return;
+      appState.currentUserId = user.id;
+      localStorage.setItem('wavechat_current_user', user.id);
+      appState.activeChatUserId = user.friends?.[0] || null;
+      closeModal('settingsModal');
+      markCurrentChatRead();
+      syncUI();
+      toast('Switched account', `Now using ${user.username}#${user.tag}.`);
+    }
+
     function addFriendByTag(){
       const me = getCurrentUser();
       if(!me) return;
@@ -1235,11 +1368,16 @@
       const tag = match[2].padStart(4, '0');
       const friend = Object.values(appState.db.users).find(u=>u.username.toLowerCase() === username && u.tag === tag);
       if(!friend){
-        return toast('User not found', 'No account with that username and tag exists in this browser.');
+        const localCount = Object.keys(appState.db.users).length;
+        return toast('User not found', localCount <= 1
+          ? 'That account is not saved in this same browser/app yet. Create the other account here first.'
+          : 'No exact username#tag match exists in this same browser/app. Open Add Friend and tap one of the local accounts below the input.');
       }
       if(friend.id === me.id){
         return toast('Nice try 😄', 'You cannot add yourself.');
       }
+      me.friends = me.friends || [];
+      friend.friends = friend.friends || [];
       if(!me.friends.includes(friend.id)) me.friends.push(friend.id);
       if(!friend.friends.includes(me.id)) friend.friends.push(me.id);
       const chat = getChat(me.id, friend.id);
