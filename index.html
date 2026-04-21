@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WaveChat — Discord-style DM App</title>
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#5865f2">
   <style>
     :root{
       --bg:#1e1f22;
@@ -1557,5 +1559,14 @@
     }
     el.messageInput.addEventListener('input', autoGrowTextarea);
   </script>
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js")
+      .then(() => console.log("Service Worker registered"))
+      .catch((err) => console.error("Service Worker error:", err));
+  });
+}
+</script>
 </body>
 </html>
