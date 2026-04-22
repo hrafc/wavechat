@@ -1,4 +1,4 @@
-const CACHE_NAME = "wavecord-cache-v1";
+const CACHE_NAME = "wavecord-cache-v2.1.0.";
 
 const ASSETS = [
   "./",
