@@ -1,61 +1,90 @@
-const CACHE_NAME = "wavecord-cache-v2.1.0.";
-
-const ASSETS = [
+const CACHE_NAME = "wavechat-cache-v3";
+const APP_SHELL = [
   "./",
   "./index.html",
-  "./ondra_discord_clone_v2.html",
   "./manifest.json"
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
-  );
-  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+
+    for (const url of APP_SHELL) {
+      try {
+        const res = await fetch(url, { cache: "no-cache" });
+        if (res.ok) {
+          await cache.put(url, res.clone());
+        }
+      } catch (err) {
+        console.warn("SW skipped caching:", url, err);
+      }
+    }
+
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      )
-    )
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(
+      keys.map((key) => {
+        if (key !== CACHE_NAME) {
+          return caches.delete(key);
+        }
+      })
+    );
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
+  const req = event.request;
+  const url = new URL(req.url);
 
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
+  if (req.method !== "GET") return;
+
+  // HTML/navigation: network first, cache fallback
+  if (req.mode === "navigate") {
+    event.respondWith((async () => {
+      try {
+        const fresh = await fetch(req);
+        const cache = await caches.open(CACHE_NAME);
+        cache.put("./index.html", fresh.clone());
+        return fresh;
+      } catch {
+        const cache = await caches.open(CACHE_NAME);
+        return (
+          (await cache.match("./index.html")) ||
+          new Response("Offline", {
+            status: 503,
+            headers: { "Content-Type": "text/plain" }
+          })
+        );
+      }
+    })());
+    return;
+  }
+
+  // Same-origin assets: cache first, then network
+  if (url.origin === location.origin) {
+    event.respondWith((async () => {
+      const cached = await caches.match(req);
       if (cached) return cached;
 
-      return fetch(event.request)
-        .then((response) => {
-          if (!response || response.status !== 200 || response.type !== "basic") {
-            return response;
-          }
-
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-
-          return response;
-        })
-        .catch(() => {
-          if (event.request.mode === "navigate") {
-            return (
-              caches.match("./index.html") ||
-              caches.match("./ondra_discord_clone_v2.html") ||
-              caches.match("./")
-            );
-          }
+      try {
+        const fresh = await fetch(req);
+        if (fresh.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(req, fresh.clone());
+        }
+        return fresh;
+      } catch {
+        return new Response("Offline asset missing", {
+          status: 503,
+          headers: { "Content-Type": "text/plain" }
         });
-    })
-  );
+      }
+    })());
+  }
 });
