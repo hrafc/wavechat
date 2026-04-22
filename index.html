@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WaveChat — Firebase DM App</title>
   <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:,">
   <meta name="theme-color" content="#5865f2">
   <style>
     :root{
@@ -895,10 +896,10 @@
 }
 
         appState.currentUserId = user.uid;
-        await loadMyProfile();
-        watchMyProfile();
+         await ensureMyProfileFromAuth(user);
+          watchMyProfile();
         await loadFriendProfiles();
-        await watchChatList();
+      await watchChatList();
 
         if(
           appState.activeChatUserId &&
@@ -1010,6 +1011,47 @@
       appState.currentUserProfile = snap.exists() ? snap.data() : null;
     }
 
+    async function ensureMyProfileFromAuth(user){
+  const ref = doc(db, 'users', user.uid);
+  const snap = await getDoc(ref);
+
+  if (snap.exists()) {
+    appState.currentUserProfile = snap.data();
+    return;
+  }
+
+  let username =
+    sanitizeUsername((user.email || "user").split("@")[0])
+      .replace(/[^-_a-zA-Z0-9.]/g, "")
+      .slice(0, 20);
+
+  if (username.length < 3) {
+    username = "user" + Math.floor(Math.random() * 1000);
+  }
+
+  const tag = await generateAvailableTag(username.toLowerCase());
+
+  await setDoc(ref, {
+    uid: user.uid,
+    email: user.email || "",
+    username,
+    usernameLower: username.toLowerCase(),
+    tag,
+    fullTag: `${username}#${tag}`,
+    birthday: "",
+    avatar: null,
+    friends: [],
+    blocked: [],
+    settings: {
+      chatBg: "gradient-1"
+    },
+    createdAt: serverTimestamp()
+  }, { merge: true });
+
+  const fixedSnap = await getDoc(ref);
+  appState.currentUserProfile = fixedSnap.exists() ? fixedSnap.data() : null;
+}
+    
     async function loadFriendProfiles(){
       const friends = appState.currentUserProfile?.friends || [];
       const entries = await Promise.all(
