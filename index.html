@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WaveChat — Discord-style DM App</title>
+  <title>WaveChat — Firebase DM App</title>
   <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#5865f2">
+  <meta name="theme-color" content="#5865f2">
   <style>
     :root{
       --bg:#1e1f22;
@@ -187,7 +187,6 @@
       margin-top:8px;
     }
     .form-grid{display:grid;gap:14px}
-    .row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     .label{
       font-size:.82rem;
       text-transform:uppercase;
@@ -235,7 +234,7 @@
       align-items:center;
     }
 
-    .server-btn,.avatar-btn,.avatar-lg,.member-avatar,.message-avatar,.profile-pic-preview,.friend-avatar, .mini-avatar{
+    .server-btn,.avatar-btn,.avatar-lg,.member-avatar,.message-avatar,.profile-pic-preview,.friend-avatar,.mini-avatar{
       display:grid;
       place-items:center;
       border-radius:50%;
@@ -439,20 +438,6 @@
 
     .settings-section{margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)}
     .account-list{display:grid;gap:10px;margin-top:10px}
-    .account-pill{
-      width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:12px 14px;border-radius:16px;background:#15171b;border:1px solid #2f343c;
-      color:#eef0f4;text-align:left;
-    }
-    .account-pill:hover{border-color:#6c7cff;transform:translateY(-1px)}
-    .account-pill.active{outline:2px solid rgba(108,124,255,.45)}
-    .account-pill-main{display:flex;align-items:center;gap:12px;min-width:0}
-    .account-pill-avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,var(--brand),var(--brand2));flex:0 0 auto}
-    .account-pill-avatar img{width:100%;height:100%;object-fit:cover}
-    .account-pill-meta{min-width:0}
-    .account-pill-name{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .account-pill-sub{font-size:.85rem;color:#9ea5ae;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .tiny-btn{padding:9px 12px;border-radius:12px;background:#23262d;border:1px solid #353943;color:#eef0f4;font-weight:700}
 
     @media (max-width:1200px){
       .app-shell{grid-template-columns:76px 290px minmax(0,1fr)}
@@ -476,21 +461,21 @@
   <section id="authScreen" class="screen">
     <div class="auth-shell">
       <div class="hero">
-        <div class="brand-chip"><span class="logo-dot"></span> WaveChat • Discord-style DM prototype</div>
+        <div class="brand-chip"><span class="logo-dot"></span> WaveChat • Firebase DM app</div>
         <h1>Build your own social chat app vibe ✨</h1>
         <p>
-          This version is a fully working <strong>HTML/CSS/JS prototype</strong>. It saves users, friends, chats, blocked users,
-          profile pictures, and chat backgrounds in <strong>localStorage</strong> on this browser.
+          This version is wired for <strong>Firebase Authentication + Firestore</strong>. Accounts are real,
+          friend search is global inside your Firebase project, and DMs sync between browsers and devices.
         </p>
         <p>
-          So yep — you can create multiple accounts here, add friends with <strong>username#1234</strong>, and message between them.
-          Later we can upgrade this into a real online app with Firebase.
+          Replace the Firebase config in the code, enable Email/Password auth, create Firestore,
+          and then you can add friends with <strong>username#1234</strong> from anywhere.
         </p>
 
         <div class="feature-grid">
           <div class="feature-card"><strong>Signup rules</strong><span>Email, username, password, birthday check (13+ only)</span></div>
           <div class="feature-card"><strong>Unique tag</strong><span>Each account gets a generated 4-digit number like <code>#1245</code></span></div>
-          <div class="feature-card"><strong>Friends & DMs</strong><span>Unlimited friends, permanent chats, search by full tag</span></div>
+          <div class="feature-card"><strong>Friends & DMs</strong><span>Unlimited friends, permanent chats, global search by full tag</span></div>
           <div class="feature-card"><strong>Profile settings</strong><span>Change avatar, block users, and switch chat background</span></div>
         </div>
       </div>
@@ -515,7 +500,7 @@
             <button class="submit-btn" type="submit">Log in</button>
           </form>
           <div class="auth-footnote">
-            Tip: you can create multiple accounts in this same browser and test messaging between them.
+            This login is handled by Firebase Auth, so the same account works across browsers and devices.
           </div>
         </div>
 
@@ -532,7 +517,7 @@
             </div>
             <div>
               <div class="label">Password</div>
-              <input type="password" id="signupPassword" minlength="4" placeholder="Choose a password" required />
+              <input type="password" id="signupPassword" minlength="6" placeholder="Choose a password" required />
             </div>
             <div>
               <div class="label">Birthday</div>
@@ -648,7 +633,7 @@
       </div>
 
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
-        <button id="copyMyTagBtn" class="tiny-btn" type="button">Copy my full tag</button>
+        <button id="copyMyTagBtn" class="small-btn" type="button">Copy my full tag</button>
       </div>
 
       <div class="form-grid">
@@ -670,9 +655,9 @@
       </div>
 
       <div class="settings-section">
-        <div class="label">Quick account switch (local prototype)</div>
+        <div class="label">Firebase account</div>
         <div id="localAccountList" class="account-list"></div>
-        <div class="small-note">Only accounts created inside this exact app/browser will appear here.</div>
+        <div class="small-note">Switch accounts by logging out and logging back in with another Firebase account.</div>
       </div>
     </div>
   </div>
@@ -682,7 +667,7 @@
       <div class="modal-head">
         <div>
           <div class="modal-title">Add a friend</div>
-          <div class="hint">Type the full tag like <strong>t3xx1k#1245</strong>. This prototype adds the friendship instantly for both users.</div>
+          <div class="hint">Type the full tag like <strong>t3xx1k#1245</strong>. Search is global inside your Firebase project.</div>
         </div>
         <button class="close-btn" data-close="addFriendModal" type="button">✕</button>
       </div>
@@ -693,13 +678,13 @@
           <input id="friendTagInput" type="text" placeholder="friendname#1234" />
         </div>
         <button id="confirmAddFriendBtn" class="submit-btn" type="button">Add friend</button>
-        <div class="small-note">Friends are unlimited. Chats with friends are permanent and never disappear unless you manually edit the code.</div>
+        <div class="small-note">Friends are unlimited. Chats with friends stay in your DM list.</div>
       </div>
 
       <div class="settings-section">
-        <div class="label">Accounts found in this browser</div>
+        <div class="label">Search note</div>
         <div id="localUsersList" class="account-list"></div>
-        <div class="small-note">Tip: if the user is missing here, that account was not created in this same browser/app yet.</div>
+        <div class="small-note">The other account must exist in the same Firebase project and use the exact username#tag.</div>
       </div>
     </div>
   </div>
@@ -720,14 +705,57 @@
 
   <div id="toastMount"></div>
 
-  <script>
-    const STORAGE_KEY = 'wavechat_local_app_v1';
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      setDoc,
+      getDoc,
+      updateDoc,
+      collection,
+      query,
+      where,
+      getDocs,
+      serverTimestamp,
+      arrayUnion,
+      arrayRemove,
+      onSnapshot,
+      orderBy,
+      addDoc,
+      increment
+    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+  apiKey: "AIzaSyAJf1mp80yFdNg8hzx5ncd_WFjww_ovk1c",
+  authDomain: "wavechat-5df5e.firebaseapp.com",
+  projectId: "wavechat-5df5e",
+  storageBucket: "wavechat-5df5e.firebasestorage.app",
+  messagingSenderId: "800562831042",
+  appId: "1:800562831042:web:ce98dc5809886fa746e55b",
+};
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
     const appState = {
-      db: loadDB(),
-      currentUserId: localStorage.getItem('wavechat_current_user') || null,
+      currentUserId: null,
+      currentUserProfile: null,
       activeChatUserId: null,
-      authView: 'login'
+      authView: 'login',
+      friendProfiles: {},
+      activeMessages: [],
+      chatIndex: {},
+      unsubChat: null,
+      unsubChatList: null
     };
 
     const el = {
@@ -785,23 +813,9 @@
     bindEvents();
     boot();
 
-    function loadDB(){
-      try{
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if(raw) return JSON.parse(raw);
-      }catch(err){ console.error('Failed to parse DB', err); }
-      return {
-        users: {},
-        chats: {}
-      };
-    }
-
-    function saveDB(){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState.db));
-    }
-
     function boot(){
-      syncUI();
+      watchAuth();
+      setAuthView('login');
     }
 
     function bindEvents(){
@@ -826,7 +840,7 @@
       el.chatSettingsBtn.addEventListener('click', openChatSettings);
       el.saveSettingsBtn.addEventListener('click', saveSettings);
       el.confirmAddFriendBtn.addEventListener('click', addFriendByTag);
-      el.copyMyTagBtn?.addEventListener('click', copyMyTag);
+      el.copyMyTagBtn.addEventListener('click', copyMyTag);
 
       document.querySelectorAll('[data-close]').forEach(btn=>{
         btn.addEventListener('click', ()=>closeModal(btn.dataset.close));
@@ -838,18 +852,7 @@
         });
       });
 
-      window.addEventListener('storage', ()=>{
-        const previousActive = appState.activeChatUserId;
-        appState.db = loadDB();
-        if(appState.currentUserId && !appState.db.users[appState.currentUserId]){
-          appState.currentUserId = null;
-          localStorage.removeItem('wavechat_current_user');
-        }
-        if(previousActive && !getCurrentUser()?.friends?.includes(previousActive)){
-          appState.activeChatUserId = null;
-        }
-        syncUI();
-      });
+      el.messageInput.addEventListener('input', autoGrowTextarea);
     }
 
     function setAuthView(view){
@@ -861,8 +864,53 @@
       el.signupTabBtn.classList.toggle('active', !login);
     }
 
-    function handleSignup(e){
+    function watchAuth(){
+      onAuthStateChanged(auth, async (user) => {
+        if(!user){
+          appState.currentUserId = null;
+          appState.currentUserProfile = null;
+          appState.friendProfiles = {};
+          appState.activeChatUserId = null;
+          appState.activeMessages = [];
+          appState.chatIndex = {};
+
+          if(appState.unsubChat){
+            appState.unsubChat();
+            appState.unsubChat = null;
+          }
+          if(appState.unsubChatList){
+            appState.unsubChatList();
+            appState.unsubChatList = null;
+          }
+
+          syncUI();
+          return;
+        }
+
+        appState.currentUserId = user.uid;
+        await loadMyProfile();
+        await loadFriendProfiles();
+        await watchChatList();
+
+        if(
+          appState.activeChatUserId &&
+          !appState.currentUserProfile?.friends?.includes(appState.activeChatUserId)
+        ){
+          appState.activeChatUserId = null;
+        }
+
+        if(!appState.activeChatUserId && appState.currentUserProfile?.friends?.length){
+          appState.activeChatUserId = appState.currentUserProfile.friends[0];
+        }
+
+        syncUI();
+        watchActiveChat();
+      });
+    }
+
+    async function handleSignup(e){
       e.preventDefault();
+
       const email = el.signupEmail.value.trim().toLowerCase();
       const username = sanitizeUsername(el.signupUsername.value.trim());
       const password = el.signupPassword.value;
@@ -880,65 +928,153 @@
       if(!isAtLeast13(birthday)){
         return toast('Age requirement', 'You must be at least 13 years old to create an account.');
       }
-      const existing = Object.values(appState.db.users).find(u=>u.email === email);
-      if(existing){
-        return toast('Email already used', 'That email already has an account in this browser.');
-      }
-      const duplicateName = Object.values(appState.db.users).find(u=>u.username.toLowerCase() === username.toLowerCase());
-      if(duplicateName){
-        return toast('Username taken', 'Pick another username for this prototype.');
-      }
 
-      const tag = generateUniqueTag(email);
-      const id = cryptoId();
-      appState.db.users[id] = {
-        id,
-        email,
-        username,
-        password,
-        birthday,
-        tag,
-        avatar:null,
-        friends:[],
-        blocked:[],
-        settings:{
-          chatBg:'gradient-1'
-        },
-        createdAt:Date.now(),
-        readAt:{}
-      };
-      saveDB();
+      try{
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const uid = cred.user.uid;
+        const tag = await generateAvailableTag(username.toLowerCase());
 
-      el.signupForm.reset();
-      toast('Account created', `Your account tag is ${username}#${tag}.`);
-      setAuthView('login');
-      el.loginEmail.value = email;
+        await setDoc(doc(db, 'users', uid), {
+          uid,
+          email,
+          username,
+          usernameLower: username.toLowerCase(),
+          tag,
+          fullTag: `${username}#${tag}`,
+          birthday,
+          avatar: null,
+          friends: [],
+          blocked: [],
+          settings: {
+            chatBg: 'gradient-1'
+          },
+          createdAt: serverTimestamp()
+        });
+
+        el.signupForm.reset();
+        toast('Account created', `Your account tag is ${username}#${tag}.`);
+      }catch(err){
+        console.error(err);
+        toast('Signup failed', err.message || 'Could not create the account.');
+      }
     }
 
-    function handleLogin(e){
+    async function generateAvailableTag(usernameLower){
+      while(true){
+        const tag = String(Math.floor(1000 + Math.random() * 9000));
+        const q = query(
+          collection(db, 'users'),
+          where('usernameLower', '==', usernameLower),
+          where('tag', '==', tag)
+        );
+        const snap = await getDocs(q);
+        if(snap.empty) return tag;
+      }
+    }
+
+    async function handleLogin(e){
       e.preventDefault();
       const email = el.loginEmail.value.trim().toLowerCase();
       const password = el.loginPassword.value;
-      const user = Object.values(appState.db.users).find(u=>u.email === email && u.password === password);
-      if(!user){
-        return toast('Login failed', 'Wrong email or password.');
+
+      try{
+        await signInWithEmailAndPassword(auth, email, password);
+        el.loginForm.reset();
+        toast('Logged in', 'Welcome back.');
+      }catch(err){
+        console.error(err);
+        toast('Login failed', 'Wrong email or password.');
       }
-      appState.currentUserId = user.id;
-      localStorage.setItem('wavechat_current_user', user.id);
-      if(user.friends.length) appState.activeChatUserId = user.friends[0];
-      else appState.activeChatUserId = null;
-      markCurrentChatRead();
-      syncUI();
-      toast('Logged in', `Welcome back, ${user.username}#${user.tag}.`);
-      el.loginForm.reset();
     }
 
-    function logout(){
-      appState.currentUserId = null;
-      appState.activeChatUserId = null;
-      localStorage.removeItem('wavechat_current_user');
-      syncUI();
-      toast('Logged out', 'You have been logged out.');
+    async function logout(){
+      try{
+        await signOut(auth);
+        toast('Logged out', 'You have been logged out.');
+      }catch(err){
+        console.error(err);
+        toast('Logout failed', 'Could not log out.');
+      }
+    }
+
+    async function loadMyProfile(){
+      const snap = await getDoc(doc(db, 'users', appState.currentUserId));
+      appState.currentUserProfile = snap.exists() ? snap.data() : null;
+    }
+
+    async function loadFriendProfiles(){
+      const friends = appState.currentUserProfile?.friends || [];
+      const entries = await Promise.all(
+        friends.map(async (uid) => {
+          const snap = await getDoc(doc(db, 'users', uid));
+          return snap.exists() ? [uid, snap.data()] : null;
+        })
+      );
+      appState.friendProfiles = Object.fromEntries(entries.filter(Boolean));
+    }
+
+    async function watchChatList(){
+      if(appState.unsubChatList){
+        appState.unsubChatList();
+        appState.unsubChatList = null;
+      }
+
+      if(!appState.currentUserId) return;
+
+      const q = query(
+        collection(db, 'chats'),
+        where('members', 'array-contains', appState.currentUserId)
+      );
+
+      appState.unsubChatList = onSnapshot(q, async (snap) => {
+        const nextIndex = {};
+        const missingFriendIds = new Set();
+
+        snap.docs.forEach((d) => {
+          const data = d.data();
+          const friendId = (data.members || []).find(id => id !== appState.currentUserId);
+          if(!friendId) return;
+
+          nextIndex[friendId] = {
+            chatId: d.id,
+            updatedAtMs: tsToMs(data.updatedAt || data.lastMessageCreatedAt || data.createdAt),
+            lastMessageText: data.lastMessageText || '',
+            lastMessageSenderId: data.lastMessageSenderId || null,
+            unreadCount: Number((data.unreadCounts && data.unreadCounts[appState.currentUserId]) || 0)
+          };
+
+          if(!appState.friendProfiles[friendId]){
+            missingFriendIds.add(friendId);
+          }
+        });
+
+        for(const friendId of missingFriendIds){
+          const userSnap = await getDoc(doc(db, 'users', friendId));
+          if(userSnap.exists()){
+            appState.friendProfiles[friendId] = userSnap.data();
+          }
+        }
+
+        const me = getCurrentUser();
+        if(me?.friends?.length){
+          me.friends.forEach(friendId => {
+            if(!nextIndex[friendId]){
+              nextIndex[friendId] = {
+                chatId: chatId(appState.currentUserId, friendId),
+                updatedAtMs: 0,
+                lastMessageText: '',
+                lastMessageSenderId: null,
+                unreadCount: 0
+              };
+            }
+          });
+        }
+
+        appState.chatIndex = nextIndex;
+        renderFriendList();
+        renderChat();
+        renderRightPanel();
+      });
     }
 
     function syncUI(){
@@ -957,11 +1093,12 @@
     }
 
     function getCurrentUser(){
-      return appState.db.users[appState.currentUserId] || null;
+      return appState.currentUserProfile || null;
     }
 
     function getUserById(id){
-      return appState.db.users[id] || null;
+      if(id === appState.currentUserId) return appState.currentUserProfile;
+      return appState.friendProfiles[id] || null;
     }
 
     function ensureActiveChatStillValid(){
@@ -982,15 +1119,16 @@
     function renderFriendList(){
       const me = getCurrentUser();
       if(!me) return;
+
       const term = el.friendSearch.value.trim().toLowerCase();
-      const friends = me.friends
-        .map(id=>getUserById(id))
+      const friends = (me.friends || [])
+        .map(id => getUserById(id))
         .filter(Boolean)
-        .filter(friend=>{
+        .filter(friend => {
           const full = `${friend.username}#${friend.tag}`.toLowerCase();
           return !term || full.includes(term) || friend.username.toLowerCase().includes(term);
         })
-        .sort((a,b)=>getLastChatTimestamp(b.id)-getLastChatTimestamp(a.id));
+        .sort((a, b) => getLastChatTimestamp(b.uid) - getLastChatTimestamp(a.uid));
 
       if(!friends.length){
         el.friendList.innerHTML = `
@@ -1001,12 +1139,12 @@
         return;
       }
 
-      el.friendList.innerHTML = friends.map(friend=>{
-        const unread = getUnreadCount(me.id, friend.id);
-        const preview = getLastMessagePreview(me.id, friend.id);
-        const active = friend.id === appState.activeChatUserId;
+      el.friendList.innerHTML = friends.map(friend => {
+        const unread = getUnreadCount(appState.currentUserId, friend.uid);
+        const preview = getLastMessagePreview(appState.currentUserId, friend.uid);
+        const active = friend.uid === appState.activeChatUserId;
         return `
-          <div class="friend-item ${active ? 'active' : ''}" data-friend-id="${friend.id}">
+          <div class="friend-item ${active ? 'active' : ''}" data-friend-id="${friend.uid}">
             <div class="friend-avatar-wrap">
               <div class="friend-avatar">${avatarContent(friend)}</div>
               <span class="status-dot"></span>
@@ -1023,15 +1161,44 @@
         `;
       }).join('');
 
-      el.friendList.querySelectorAll('.friend-item').forEach(item=>{
-        item.addEventListener('click', ()=>{
+      el.friendList.querySelectorAll('.friend-item').forEach(item => {
+        item.addEventListener('click', async () => {
           appState.activeChatUserId = item.dataset.friendId;
-          markCurrentChatRead();
-          saveDB();
+          await markCurrentChatRead();
+          watchActiveChat();
           renderFriendList();
           renderChat();
           renderRightPanel();
         });
+      });
+    }
+
+    function watchActiveChat(){
+      if(appState.unsubChat){
+        appState.unsubChat();
+        appState.unsubChat = null;
+      }
+
+      const me = getCurrentUser();
+      const friend = getUserById(appState.activeChatUserId);
+
+      if(!me || !friend){
+        appState.activeMessages = [];
+        renderChat();
+        return;
+      }
+
+      const cId = chatId(appState.currentUserId, friend.uid);
+      const q = query(
+        collection(db, 'chats', cId, 'messages'),
+        orderBy('createdAt', 'asc')
+      );
+
+      appState.unsubChat = onSnapshot(q, async (snap) => {
+        appState.activeMessages = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        await markCurrentChatRead();
+        renderChat();
+        renderFriendList();
       });
     }
 
@@ -1047,7 +1214,7 @@
         el.messages.innerHTML = `
           <div class="welcome-card">
             <h2 style="margin:0 0 10px">Welcome to WaveChat</h2>
-            <div class="muted">Add a friend with <strong>username#1234</strong> and their DM will stay here forever. This is a front-end prototype that stores everything in localStorage.</div>
+            <div class="muted">Add a friend with <strong>username#1234</strong> and your DMs will sync through Firebase.</div>
           </div>
         `;
         el.messageInput.disabled = true;
@@ -1062,10 +1229,9 @@
       el.chatTopSub.textContent = `${friend.username}#${friend.tag}`;
       applyChatBackground();
 
-      const chat = getChat(me.id, friend.id);
-      const messages = chat.messages || [];
-      const blockedByMe = me.blocked.includes(friend.id);
-      const blockedMe = friend.blocked.includes(me.id);
+      const messages = appState.activeMessages || [];
+      const blockedByMe = (me.blocked || []).includes(friend.uid);
+      const blockedMe = (friend.blocked || []).includes(appState.currentUserId);
       const cannotSend = blockedByMe || blockedMe;
 
       el.messageInput.disabled = cannotSend;
@@ -1083,7 +1249,7 @@
         el.messages.innerHTML = `
           <div class="welcome-card">
             <h2 style="margin:0 0 10px">This is the start of your chat with @${escapeHtml(friend.username)}</h2>
-            <div class="muted">Send the first message and it will stay saved here.</div>
+            <div class="muted">Send the first message and it will stay synced here.</div>
           </div>
           ${blockedByMe ? '<div class="system-note">You blocked this user. No new messages from them will reach you.</div>' : ''}
           ${blockedMe ? '<div class="system-note">This user blocked you. You can still read old messages, but not send new ones.</div>' : ''}
@@ -1095,7 +1261,7 @@
 
         el.messages.innerHTML = `
           ${notes.join('')}
-          ${messages.map(msg=>{
+          ${messages.map(msg => {
             const author = getUserById(msg.senderId);
             return `
               <div class="message">
@@ -1130,8 +1296,10 @@
         `;
         return;
       }
-      const blockedByMe = me.blocked.includes(friend.id);
-      const blockedMe = friend.blocked.includes(me.id);
+
+      const blockedByMe = (me.blocked || []).includes(friend.uid);
+      const blockedMe = (friend.blocked || []).includes(appState.currentUserId);
+
       el.membersScroll.innerHTML = `
         <div class="panel-card">
           <div class="avatar-lg">${avatarContent(friend)}</div>
@@ -1159,7 +1327,7 @@
       `;
     }
 
-    function sendMessage(){
+    async function sendMessage(){
       const me = getCurrentUser();
       const friend = getUserById(appState.activeChatUserId);
       if(!me || !friend) return;
@@ -1167,27 +1335,42 @@
       const text = el.messageInput.value.trim();
       if(!text) return;
 
-      if(me.blocked.includes(friend.id)){
+      if((me.blocked || []).includes(friend.uid)){
         return toast('Blocked chat', 'Unblock this user first if you want to send a message.');
       }
-      if(friend.blocked.includes(me.id)){
+      if((friend.blocked || []).includes(appState.currentUserId)){
         return toast('Cannot send', 'This user blocked you, so new messages are disabled.');
       }
 
-      const chat = getChat(me.id, friend.id);
-      chat.messages.push({
-        id: cryptoId(),
-        senderId: me.id,
-        text,
-        createdAt: Date.now()
-      });
-      touchChat(chat);
-      markCurrentChatRead();
-      saveDB();
-      el.messageInput.value = '';
-      autoGrowTextarea();
-      renderFriendList();
-      renderChat();
+      try{
+        const cId = chatId(appState.currentUserId, friend.uid);
+
+        await setDoc(doc(db, 'chats', cId), {
+          members: [appState.currentUserId, friend.uid],
+          createdAt: serverTimestamp()
+        }, { merge: true });
+
+        await addDoc(collection(db, 'chats', cId, 'messages'), {
+          senderId: appState.currentUserId,
+          text,
+          createdAt: serverTimestamp()
+        });
+
+        await updateDoc(doc(db, 'chats', cId), {
+          updatedAt: serverTimestamp(),
+          lastMessageText: text,
+          lastMessageSenderId: appState.currentUserId,
+          lastMessageCreatedAt: serverTimestamp(),
+          [`unreadCounts.${friend.uid}`]: increment(1),
+          [`unreadCounts.${appState.currentUserId}`]: 0
+        });
+
+        el.messageInput.value = '';
+        autoGrowTextarea();
+      }catch(err){
+        console.error(err);
+        toast('Send failed', err.message || 'Could not send the message.');
+      }
     }
 
     function openSettings(){
@@ -1197,15 +1380,22 @@
       el.settingsUserIdentity.textContent = `${me.username}#${me.tag}`;
       el.chatBgSelect.value = me.settings?.chatBg || 'gradient-1';
       el.avatarUpload.value = '';
-      renderLocalAccountList();
+      el.localAccountList.innerHTML = `
+        <div class="empty-state">Account switching is now done by real logout + login with Firebase.</div>
+      `;
       openModal('settingsModal');
     }
 
     async function saveSettings(){
       const me = getCurrentUser();
       if(!me) return;
-      me.settings = me.settings || {};
-      me.settings.chatBg = el.chatBgSelect.value;
+
+      const updates = {
+        settings: {
+          ...(me.settings || {}),
+          chatBg: el.chatBgSelect.value
+        }
+      };
 
       const file = el.avatarUpload.files?.[0];
       if(file){
@@ -1213,16 +1403,23 @@
           return toast('Image too big', 'Use an avatar image under about 2.2 MB.');
         }
         try{
-          me.avatar = await fileToDataURL(file);
+          updates.avatar = await fileToDataURL(file);
         }catch(err){
           console.error(err);
           return toast('Upload failed', 'Could not read that image file.');
         }
       }
-      saveDB();
-      closeModal('settingsModal');
-      syncUI();
-      toast('Settings saved', 'Your avatar and chat background were updated.');
+
+      try{
+        await updateDoc(doc(db, 'users', appState.currentUserId), updates);
+        await loadMyProfile();
+        closeModal('settingsModal');
+        syncUI();
+        toast('Settings saved', 'Your avatar and chat background were updated.');
+      }catch(err){
+        console.error(err);
+        toast('Save failed', err.message || 'Could not save settings.');
+      }
     }
 
     function openChatSettings(){
@@ -1231,8 +1428,10 @@
       if(!me || !friend){
         return toast('No open chat', 'Open a friend chat first.');
       }
-      const blockedByMe = me.blocked.includes(friend.id);
-      const blockedMe = friend.blocked.includes(me.id);
+
+      const blockedByMe = (me.blocked || []).includes(friend.uid);
+      const blockedMe = (friend.blocked || []).includes(appState.currentUserId);
+
       el.chatSettingsContent.innerHTML = `
         <div class="tag-box">${escapeHtml(friend.username)}#${friend.tag}</div>
         <div class="hint">
@@ -1243,32 +1442,45 @@
           ${blockedByMe ? 'Unblock user' : 'Block user'}
         </button>
       `;
-      document.getElementById('toggleBlockBtn').addEventListener('click', ()=>toggleBlock(friend.id));
+
+      document.getElementById('toggleBlockBtn').addEventListener('click', ()=>toggleBlock(friend.uid));
       openModal('chatSettingsModal');
     }
 
-    function toggleBlock(friendId){
+    async function toggleBlock(friendId){
       const me = getCurrentUser();
       const friend = getUserById(friendId);
       if(!me || !friend) return;
-      if(me.blocked.includes(friendId)){
-        me.blocked = me.blocked.filter(id=>id !== friendId);
-        toast('User unblocked', `${friend.username} can send messages to you again.`);
-      }else{
-        me.blocked.push(friendId);
-        toast('User blocked', `No new messages from ${friend.username} will reach you.`);
-      }
-      saveDB();
-      closeModal('chatSettingsModal');
-      syncUI();
-    }
 
+      try{
+        if((me.blocked || []).includes(friendId)){
+          await updateDoc(doc(db, 'users', appState.currentUserId), {
+            blocked: arrayRemove(friendId)
+          });
+          toast('User unblocked', `${friend.username} can send messages to you again.`);
+        }else{
+          await updateDoc(doc(db, 'users', appState.currentUserId), {
+            blocked: arrayUnion(friendId)
+          });
+          toast('User blocked', `No new messages from ${friend.username} will reach you.`);
+        }
+
+        await loadMyProfile();
+        closeModal('chatSettingsModal');
+        syncUI();
+      }catch(err){
+        console.error(err);
+        toast('Block failed', err.message || 'Could not update block status.');
+      }
+    }
 
     function openAddFriendModal(){
       const me = getCurrentUser();
       if(!me) return;
       el.friendTagInput.value = '';
-      renderLocalUsersList();
+      el.localUsersList.innerHTML = `
+        <div class="empty-state">Friend search is global through Firebase. Type username#1234 above.</div>
+      `;
       openModal('addFriendModal');
     }
 
@@ -1287,160 +1499,120 @@
       toast('Copy failed', `Your full tag is ${fullTag}.`);
     }
 
-    function renderLocalUsersList(){
-      const me = getCurrentUser();
-      if(!me || !el.localUsersList) return;
-      const users = Object.values(appState.db.users)
-        .filter(user=>user.id !== me.id)
-        .sort((a,b)=>a.username.localeCompare(b.username));
-
-      if(!users.length){
-        el.localUsersList.innerHTML = `
-          <div class="empty-state">No other local accounts yet. Create a second account in this same app/browser first.</div>
-        `;
-        return;
-      }
-
-      el.localUsersList.innerHTML = users.map(user=>`
-        <button class="account-pill" type="button" data-local-user-tag="${escapeHtml(`${user.username}#${user.tag}`)}">
-          <span class="account-pill-main">
-            <span class="account-pill-avatar">${avatarContent(user)}</span>
-            <span class="account-pill-meta">
-              <span class="account-pill-name">${escapeHtml(user.username)}#${user.tag}</span>
-              <span class="account-pill-sub">Tap to fill this tag into the friend field</span>
-            </span>
-          </span>
-          <span class="tiny-btn">Use</span>
-        </button>
-      `).join('');
-
-      el.localUsersList.querySelectorAll('[data-local-user-tag]').forEach(btn=>{
-        btn.addEventListener('click', ()=>{
-          el.friendTagInput.value = btn.dataset.localUserTag;
-          toast('Filled in', `${btn.dataset.localUserTag} was inserted.`);
-        });
-      });
-    }
-
-    function renderLocalAccountList(){
-      const me = getCurrentUser();
-      if(!me || !el.localAccountList) return;
-      const users = Object.values(appState.db.users)
-        .sort((a,b)=>a.username.localeCompare(b.username));
-
-      el.localAccountList.innerHTML = users.map(user=>`
-        <button class="account-pill ${user.id === me.id ? 'active' : ''}" type="button" data-switch-user-id="${user.id}">
-          <span class="account-pill-main">
-            <span class="account-pill-avatar">${avatarContent(user)}</span>
-            <span class="account-pill-meta">
-              <span class="account-pill-name">${escapeHtml(user.username)}#${user.tag}</span>
-              <span class="account-pill-sub">${escapeHtml(user.email)}</span>
-            </span>
-          </span>
-          <span class="tiny-btn">${user.id === me.id ? 'Current' : 'Switch'}</span>
-        </button>
-      `).join('');
-
-      el.localAccountList.querySelectorAll('[data-switch-user-id]').forEach(btn=>{
-        btn.addEventListener('click', ()=>switchAccount(btn.dataset.switchUserId));
-      });
-    }
-
-    function switchAccount(userId){
-      const user = getUserById(userId);
-      if(!user) return;
-      appState.currentUserId = user.id;
-      localStorage.setItem('wavechat_current_user', user.id);
-      appState.activeChatUserId = user.friends?.[0] || null;
-      closeModal('settingsModal');
-      markCurrentChatRead();
-      syncUI();
-      toast('Switched account', `Now using ${user.username}#${user.tag}.`);
-    }
-
-    function addFriendByTag(){
+    async function addFriendByTag(){
       const me = getCurrentUser();
       if(!me) return;
+
       const raw = el.friendTagInput.value.trim();
       const match = raw.match(/^(.+?)#(\d{1,4})$/);
+
       if(!match){
         return toast('Wrong format', 'Use the full tag like username#1234.');
       }
-      const username = match[1].trim().toLowerCase();
+
+      const usernameLower = match[1].trim().toLowerCase();
       const tag = match[2].padStart(4, '0');
-      const friend = Object.values(appState.db.users).find(u=>u.username.toLowerCase() === username && u.tag === tag);
-      if(!friend){
-        const localCount = Object.keys(appState.db.users).length;
-        return toast('User not found', localCount <= 1
-          ? 'That account is not saved in this same browser/app yet. Create the other account here first.'
-          : 'No exact username#tag match exists in this same browser/app. Open Add Friend and tap one of the local accounts below the input.');
+
+      try{
+        const q = query(
+          collection(db, 'users'),
+          where('usernameLower', '==', usernameLower),
+          where('tag', '==', tag)
+        );
+
+        const snap = await getDocs(q);
+        if(snap.empty){
+          return toast('User not found', 'No global account matches that username#tag.');
+        }
+
+        const friend = snap.docs[0].data();
+        if(friend.uid === appState.currentUserId){
+          return toast('Nice try 😄', 'You cannot add yourself.');
+        }
+
+        await updateDoc(doc(db, 'users', appState.currentUserId), {
+          friends: arrayUnion(friend.uid)
+        });
+
+        await updateDoc(doc(db, 'users', friend.uid), {
+          friends: arrayUnion(appState.currentUserId)
+        });
+
+        const cId = chatId(appState.currentUserId, friend.uid);
+        await setDoc(doc(db, 'chats', cId), {
+          members: [appState.currentUserId, friend.uid],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          lastMessageText: '',
+          lastMessageSenderId: null,
+          unreadCounts: {
+            [appState.currentUserId]: 0,
+            [friend.uid]: 0
+          }
+        }, { merge: true });
+
+        await loadMyProfile();
+        await loadFriendProfiles();
+        await watchChatList();
+
+        appState.activeChatUserId = friend.uid;
+        el.friendTagInput.value = '';
+        closeModal('addFriendModal');
+        syncUI();
+        watchActiveChat();
+
+        toast('Friend added', `${friend.username}#${friend.tag} is now in your DM list.`);
+      }catch(err){
+        console.error(err);
+        toast('Add failed', err.message || 'Could not add that friend.');
       }
-      if(friend.id === me.id){
-        return toast('Nice try 😄', 'You cannot add yourself.');
-      }
-      me.friends = me.friends || [];
-      friend.friends = friend.friends || [];
-      if(!me.friends.includes(friend.id)) me.friends.push(friend.id);
-      if(!friend.friends.includes(me.id)) friend.friends.push(me.id);
-      const chat = getChat(me.id, friend.id);
-      touchChat(chat);
-      saveDB();
-      el.friendTagInput.value = '';
-      appState.activeChatUserId = friend.id;
-      closeModal('addFriendModal');
-      syncUI();
-      toast('Friend added', `${friend.username}#${friend.tag} is now in your DM list.`);
     }
 
-    function getChat(a,b){
-      const id = chatId(a,b);
-      if(!appState.db.chats[id]){
-        appState.db.chats[id] = { id, members:[a,b].sort(), messages:[], updatedAt:Date.now() };
-      }
-      return appState.db.chats[id];
-    }
+    async function markCurrentChatRead(){
+      const me = getCurrentUser();
+      const friend = getUserById(appState.activeChatUserId);
+      if(!me || !friend) return;
 
-    function touchChat(chat){
-      chat.updatedAt = Date.now();
+      try{
+        const cId = chatId(appState.currentUserId, friend.uid);
+        await updateDoc(doc(db, 'chats', cId), {
+          [`unreadCounts.${appState.currentUserId}`]: 0
+        });
+
+        if(appState.chatIndex[friend.uid]){
+          appState.chatIndex[friend.uid].unreadCount = 0;
+        }
+      }catch(err){
+        // okay if chat doc does not exist yet
+      }
     }
 
     function chatId(a,b){
       return [a,b].sort().join('__');
     }
 
+    function tsToMs(ts){
+      if(!ts) return 0;
+      if(typeof ts === 'number') return ts;
+      if(typeof ts.toMillis === 'function') return ts.toMillis();
+      if(typeof ts.seconds === 'number') return ts.seconds * 1000;
+      return 0;
+    }
+
     function getLastChatTimestamp(friendId){
-      const me = getCurrentUser();
-      if(!me || !friendId) return 0;
-      const chat = getChat(me.id, friendId);
-      const lastMsg = chat.messages[chat.messages.length - 1];
-      return lastMsg?.createdAt || chat.updatedAt || 0;
+      return appState.chatIndex[friendId]?.updatedAtMs || 0;
     }
 
     function getLastMessagePreview(myId, friendId){
-      const chat = getChat(myId, friendId);
-      const last = chat.messages[chat.messages.length - 1];
-      if(!last) return 'No messages yet';
-      const sender = getUserById(last.senderId);
-      const prefix = last.senderId === myId ? 'You: ' : `${sender?.username || 'User'}: `;
-      return `${prefix}${last.text}`;
+      const meta = appState.chatIndex[friendId];
+      if(!meta || !meta.lastMessageText) return 'No messages yet';
+      const friend = getUserById(friendId);
+      const prefix = meta.lastMessageSenderId === myId ? 'You: ' : `${friend?.username || 'User'}: `;
+      return `${prefix}${meta.lastMessageText}`;
     }
 
     function getUnreadCount(myId, friendId){
-      const me = getUserById(myId);
-      if(!me) return 0;
-      const chat = getChat(myId, friendId);
-      const readAt = me.readAt?.[chat.id] || 0;
-      return chat.messages.filter(msg=>msg.senderId !== myId && msg.createdAt > readAt).length;
-    }
-
-    function markCurrentChatRead(){
-      const me = getCurrentUser();
-      const friend = getUserById(appState.activeChatUserId);
-      if(!me || !friend) return;
-      const chat = getChat(me.id, friend.id);
-      me.readAt = me.readAt || {};
-      me.readAt[chat.id] = Date.now();
-      saveDB();
+      return appState.chatIndex[friendId]?.unreadCount || 0;
     }
 
     function applyChatBackground(){
@@ -1471,26 +1643,6 @@
       return value.replace(/\s+/g,'');
     }
 
-    function generateUniqueTag(email){
-      let num = simpleHash(email) % 10000;
-      let tag = String(num).padStart(4,'0');
-      const used = new Set(Object.values(appState.db.users).map(u=>u.tag));
-      while(used.has(tag)){
-        num = (num + 1) % 10000;
-        tag = String(num).padStart(4,'0');
-      }
-      return tag;
-    }
-
-    function simpleHash(str){
-      let hash = 0;
-      for(let i=0;i<str.length;i++){
-        hash = ((hash << 5) - hash) + str.charCodeAt(i);
-        hash |= 0;
-      }
-      return Math.abs(hash);
-    }
-
     function isAtLeast13(dateString){
       const birth = new Date(dateString);
       if(Number.isNaN(birth.getTime())) return false;
@@ -1510,13 +1662,14 @@
       });
     }
 
-    function cryptoId(){
-      if(window.crypto?.randomUUID) return window.crypto.randomUUID();
-      return 'id_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    }
-
     function formatTime(ts){
-      const d = new Date(ts);
+      let d;
+      if(ts?.toDate){
+        d = ts.toDate();
+      }else{
+        d = new Date(ts);
+      }
+      if(Number.isNaN(d.getTime())) return '';
       return d.toLocaleString([], {
         year:'numeric', month:'short', day:'numeric',
         hour:'2-digit', minute:'2-digit'
@@ -1555,18 +1708,18 @@
 
     function autoGrowTextarea(){
       el.messageInput.style.height = 'auto';
-      el.messageInput.style.height = Math.min(el.messageInput.scrollHeight,180) + 'px';
+      el.messageInput.style.height = Math.min(el.messageInput.scrollHeight, 180) + 'px';
     }
-    el.messageInput.addEventListener('input', autoGrowTextarea);
   </script>
+
   <script>
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js")
-      .then(() => console.log("Service Worker registered"))
-      .catch((err) => console.error("Service Worker error:", err));
-  });
-}
-</script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(() => console.log('Service Worker registered'))
+          .catch((err) => console.error('Service Worker error:', err));
+      });
+    }
+  </script>
 </body>
 </html>
