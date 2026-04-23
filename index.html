@@ -440,22 +440,94 @@
     .settings-section{margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)}
     .account-list{display:grid;gap:10px;margin-top:10px}
 
+    .mobile-nav{
+  display:none;
+}
+
+.mobile-nav{
+  position:fixed;
+  left:12px;
+  right:12px;
+  bottom:12px;
+  z-index:80;
+  gap:10px;
+  padding:10px;
+  border-radius:18px;
+  background:rgba(20,22,26,.92);
+  border:1px solid rgba(255,255,255,.08);
+  backdrop-filter:blur(14px);
+  box-shadow:0 12px 32px rgba(0,0,0,.35);
+}
+
+.mobile-nav-btn{
+  flex:1;
+  padding:12px 14px;
+  border-radius:14px;
+  background:#1f232a;
+  color:#eef0f4;
+  border:1px solid #323844;
+  font-weight:800;
+}
+
+.mobile-nav-btn.active{
+  background:linear-gradient(135deg,var(--brand),var(--brand2));
+  color:#fff;
+  border-color:transparent;
+}
+    
     @media (max-width:1200px){
       .app-shell{grid-template-columns:76px 290px minmax(0,1fr)}
       .members-panel{display:none}
     }
     @media (max-width:900px){
-      body{overflow:auto}
-      .screen{padding:14px}
-      .auth-shell{grid-template-columns:1fr}
-      .hero{min-height:unset}
-      .auth-card{min-height:unset}
-      .app-shell{grid-template-columns:1fr;height:auto;min-height:100dvh}
-      .serverbar,.members-panel{display:none}
-      .friends-panel{display:none}
-      .chat-panel{min-height:100dvh}
-      .chat-top{position:sticky;top:0;z-index:3}
-    }
+  body{overflow:auto}
+  .screen{padding:14px}
+  .auth-shell{grid-template-columns:1fr}
+  .hero{min-height:unset}
+  .auth-card{min-height:unset}
+
+  .mobile-nav{
+    display:flex;
+  }
+
+  .app-shell{
+    grid-template-columns:1fr;
+    height:auto;
+    min-height:100dvh;
+    padding-bottom:90px;
+  }
+
+  .serverbar{
+    display:none;
+  }
+
+  .friends-panel,
+  .chat-panel,
+  .members-panel{
+    display:none;
+    min-height:100dvh;
+  }
+
+  .app-shell.mobile-view-friends .friends-panel{
+    display:flex;
+  }
+
+  .app-shell.mobile-view-chat .chat-panel{
+    display:flex;
+  }
+
+  .app-shell.mobile-view-info .members-panel{
+    display:flex;
+  }
+
+  .chat-top,
+  .friends-top,
+  .members-top{
+    position:sticky;
+    top:0;
+    z-index:3;
+  }
+}
   </style>
 </head>
 <body>
@@ -536,6 +608,11 @@
 
   <section id="appScreen" class="hidden" style="height:100%">
     <div class="app-shell">
+      <div id="mobileNav" class="mobile-nav hidden">
+       <button id="mobileFriendsBtn" class="mobile-nav-btn active" type="button">Friends</button>
+       <button id="mobileChatBtn" class="mobile-nav-btn" type="button">Chat</button>
+      <button id="mobileInfoBtn" class="mobile-nav-btn" type="button">Info</button>
+    </div>
       <aside class="serverbar">
         <button class="server-btn active" title="Direct Messages">💬</button>
         <button id="openAddFriendFromBar" class="server-btn" title="Add Friend">➕</button>
@@ -809,7 +886,12 @@
       confirmAddFriendBtn: document.getElementById('confirmAddFriendBtn'),
       localUsersList: document.getElementById('localUsersList'),
       chatSettingsContent: document.getElementById('chatSettingsContent'),
-      toastMount: document.getElementById('toastMount')
+      toastMount: document.getElementById('toastMount'),
+      appShell: document.querySelector('.app-shell'),
+      mobileNav: document.getElementById('mobileNav'),
+      mobileFriendsBtn: document.getElementById('mobileFriendsBtn'),
+      mobileChatBtn: document.getElementById('mobileChatBtn'),
+      mobileInfoBtn: document.getElementById('mobileInfoBtn')
     };
 
     bindEvents();
@@ -855,6 +937,20 @@
       });
 
       el.messageInput.addEventListener('input', autoGrowTextarea);
+
+      el.mobileFriendsBtn?.addEventListener('click', ()=>setMobileView('friends'));
+el.mobileChatBtn?.addEventListener('click', ()=>setMobileView('chat'));
+el.mobileInfoBtn?.addEventListener('click', ()=>setMobileView('info'));
+
+window.addEventListener('resize', () => {
+  if(isMobileView()){
+    if(appState.activeChatUserId){
+      setMobileView('chat');
+    }else{
+      setMobileView('friends');
+    }
+  }
+});
     }
 
     function setAuthView(view){
@@ -1145,6 +1241,21 @@
       });
     }
 
+    function isMobileView(){
+  return window.innerWidth <= 900;
+}
+
+function setMobileView(view){
+  if(!el.appShell) return;
+
+  el.appShell.classList.remove('mobile-view-friends', 'mobile-view-chat', 'mobile-view-info');
+  el.appShell.classList.add(`mobile-view-${view}`);
+
+  el.mobileFriendsBtn?.classList.toggle('active', view === 'friends');
+  el.mobileChatBtn?.classList.toggle('active', view === 'chat');
+  el.mobileInfoBtn?.classList.toggle('active', view === 'info');
+}
+
     function syncUI(){
       const loggedIn = !!getCurrentUser();
       el.authScreen.classList.toggle('hidden', loggedIn);
@@ -1158,6 +1269,13 @@
       renderFriendList();
       renderChat();
       renderRightPanel();
+      if(isMobileView()){
+  if(appState.activeChatUserId){
+    setMobileView('chat');
+  }else{
+    setMobileView('friends');
+  }
+}
     }
 
     function getCurrentUser(){
@@ -1231,13 +1349,17 @@
 
       el.friendList.querySelectorAll('.friend-item').forEach(item => {
         item.addEventListener('click', async () => {
-          appState.activeChatUserId = item.dataset.friendId;
-          await markCurrentChatRead();
-          watchActiveChat();
-          renderFriendList();
-          renderChat();
-          renderRightPanel();
-        });
+  appState.activeChatUserId = item.dataset.friendId;
+  await markCurrentChatRead();
+  watchActiveChat();
+  renderFriendList();
+  renderChat();
+  renderRightPanel();
+
+  if(isMobileView()){
+    setMobileView('chat');
+  }
+});
       });
     }
 
