@@ -1,4 +1,4 @@
-const CACHE_NAME = "wavechat-cache-v3.3";
+const CACHE_NAME = "wavechat-cache-v3.5";
 const APP_SHELL = [
   "./",
   "./index.html",
