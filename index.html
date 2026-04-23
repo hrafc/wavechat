@@ -786,12 +786,13 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
     import {
-      getAuth,
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  updateProfile
+} from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
     import {
       getFirestore,
       doc,
@@ -1014,56 +1015,61 @@ window.addEventListener('resize', () => {
     }
 
     async function handleSignup(e){
-      e.preventDefault();
+  e.preventDefault();
 
-      const email = el.signupEmail.value.trim().toLowerCase();
-      const username = sanitizeUsername(el.signupUsername.value.trim());
-      const password = el.signupPassword.value;
-      const birthday = el.signupBirthday.value;
+  const email = el.signupEmail.value.trim().toLowerCase();
+  const username = sanitizeUsername(el.signupUsername.value.trim());
+  const password = el.signupPassword.value;
+  const birthday = el.signupBirthday.value;
 
-      if(!email || !username || !password || !birthday){
-        return toast('Missing info', 'Fill in all signup fields first.');
-      }
-      if(username.length < 3){
-        return toast('Username too short', 'Use at least 3 characters for the username.');
-      }
-      if(!/^[-_a-zA-Z0-9.]+$/.test(username)){
-        return toast('Invalid username', 'Use only letters, numbers, dots, dashes, and underscores.');
-      }
-      if(!isAtLeast13(birthday)){
-        return toast('Age requirement', 'You must be at least 13 years old to create an account.');
-      }
+  if(!email || !username || !password || !birthday){
+    return toast('Missing info', 'Fill in all signup fields first.');
+  }
+  if(username.length < 3){
+    return toast('Username too short', 'Use at least 3 characters for the username.');
+  }
+  if(!/^[-_a-zA-Z0-9.]+$/.test(username)){
+    return toast('Invalid username', 'Use only letters, numbers, dots, dashes, and underscores.');
+  }
+  if(!isAtLeast13(birthday)){
+    return toast('Age requirement', 'You must be at least 13 years old to create an account.');
+  }
 
-      try{
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        const uid = cred.user.uid;
-        const tag = await generateAvailableTag(username.toLowerCase());
+  try{
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-        await setDoc(doc(db, 'users', uid), {
-          uid,
-          email,
-          username,
-          usernameLower: username.toLowerCase(),
-          tag,
-          fullTag: `${username}#${tag}`,
-          birthday,
-          avatar: null,
-          friends: [],
-          blocked: [],
-          settings: {
-            chatBg: 'gradient-1'
-          },
-          createdAt: serverTimestamp()
-        });
+    // nastav i Firebase displayName
+    await updateProfile(cred.user, {
+      displayName: username
+    });
 
-        el.signupForm.reset();
-        toast('Account created', `Your account tag is ${username}#${tag}.`);
-      }catch(err){
-        console.error(err);
-        toast('Signup failed', err.message || 'Could not create the account.');
-      }
-    }
+    const uid = cred.user.uid;
+    const tag = await generateAvailableTag(username.toLowerCase());
 
+    await setDoc(doc(db, 'users', uid), {
+      uid,
+      email,
+      username,
+      usernameLower: username.toLowerCase(),
+      tag,
+      fullTag: `${username}#${tag}`,
+      birthday,
+      avatar: null,
+      friends: [],
+      blocked: [],
+      settings: {
+        chatBg: 'gradient-1'
+      },
+      createdAt: serverTimestamp()
+    });
+
+    el.signupForm.reset();
+    toast('Account created', `Your account tag is ${username}#${tag}.`);
+  }catch(err){
+    console.error(err);
+    toast('Signup failed', err.message || 'Could not create the account.');
+  }
+}
     async function generateAvailableTag(usernameLower){
       while(true){
         const tag = String(Math.floor(1000 + Math.random() * 9000));
@@ -1116,10 +1122,13 @@ window.addEventListener('resize', () => {
     return;
   }
 
-  let username =
-    sanitizeUsername((user.email || "user").split("@")[0])
-      .replace(/[^-_a-zA-Z0-9.]/g, "")
-      .slice(0, 20);
+  const authDisplayName = (user.displayName || "").split("#")[0].trim();
+
+  let username = sanitizeUsername(
+    authDisplayName || (user.email || "user").split("@")[0]
+  )
+    .replace(/[^-_a-zA-Z0-9.]/g, "")
+    .slice(0, 20);
 
   if (username.length < 3) {
     username = "user" + Math.floor(Math.random() * 1000);
